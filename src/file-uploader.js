@@ -79,7 +79,7 @@ class FileUploader extends HTMLElement {
           line-height: 16.94px;
           text-align: center;
           color: #FFFFFF;
-           margin: 0;
+          margin: 0;
         }
         .input-container {
           display: flex;
@@ -97,8 +97,8 @@ class FileUploader extends HTMLElement {
           border: none;
           outline: none;
           flex: 1;
-          background: transparent;  
-          color: #5F5CF0;  
+          background: transparent;
+          color: #5F5CF0;
         }
         .input-container input::placeholder {
           font-family: Inter;
@@ -147,6 +147,56 @@ class FileUploader extends HTMLElement {
           text-align: center;
           color: #5F5CF0;
         }
+        .progress-container {
+          display: none;
+          flex-direction: row;
+          align-items: center;
+          justify-content: space-between;
+          width: 80%;
+          margin-top: 10px;
+          padding: 5px;
+          background: #E6E6FF;
+          border-radius: 5px;
+        }
+        .progress-container p.file-name {
+          font-family: Inter;
+          font-size: 14px;
+          color: #5F5CF0;
+          margin: 0;
+          flex: 1;
+          text-align: left;
+        }
+        .progress-bar {
+          width: 50%;
+          height: 10px;
+          background: #ddd;
+          border-radius: 5px;
+          overflow: hidden;
+          margin: 0 10px;
+        }
+        .progress {
+          height: 100%;
+          background: #5F5CF0;
+          width: 0%;
+          transition: width 0.1s linear;
+        }
+        .progress-percentage {
+          font-family: Inter;
+          font-size: 12px;
+          color: #5F5CF0;
+          margin: 0;
+          width: 30px;
+          text-align: right;
+        }
+        .progress-container .clear-progress {
+          width: 16px;
+          height: 16px;
+          background: url('src/images/+_input.svg') no-repeat center;
+          background-size: cover;
+          border: none;
+          cursor: pointer;
+          margin-left: 5px;
+        }
         .button {
           background: #BBB9D2;
           color: white;
@@ -162,9 +212,38 @@ class FileUploader extends HTMLElement {
           font-size: 20px;
           line-height: 24.2px;
         }
+        .button.active {
+          background: #FF5555;
+          cursor: pointer;
+        }
         .error {
           color: red;
           font-size: 12px;
+          margin-top: 5px;
+        }
+        .response-container {
+          display: none;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          height: 100%;
+          text-align: center;
+        }
+        .response-container h1 {
+          font-family: Inter;
+          font-weight: 600;
+          font-size: 20px;
+          color: #FFFFFF;
+          margin-bottom: 20px;
+        }
+        .response-container p {
+          font-family: Inter;
+          font-size: 14px;
+          color: #5F5CF0;
+          margin: 5px 0;
+        }
+        .error-response {
+          background: linear-gradient(to bottom, #FF5555, #FF9999, #FFFFFF);
         }
       </style>
       <div class="upload-container">
@@ -185,11 +264,26 @@ class FileUploader extends HTMLElement {
                 <p>Перенесите ваш в файл в область ниже</p>
               </div>
               <div class="file-info"></div>
+              <div class="progress-container">
+                <p class="file-name"></p>
+                <div class="progress-bar">
+                  <div class="progress"></div>
+                </div>
+                <p class="progress-percentage">0%</p>
+                <button class="clear-progress"></button>
+              </div>
               <div class="error"></div>
-            
             </div>
             <button class="button" disabled>Загрузить</button>
           </div>
+          <div class="response-container">
+            <h1></h1>
+            <p></p>
+            <p></p>
+            <p></p>
+            <p></p>
+          </div>
+        </div>
       </div>
     `;
 
@@ -203,13 +297,34 @@ class FileUploader extends HTMLElement {
     const errorBox = this.shadowRoot.querySelector('.error');
     const uploadButton = this.shadowRoot.querySelector('.button');
     const clearBtn = this.shadowRoot.querySelector('.clear-btn');
+    const progressContainer = this.shadowRoot.querySelector('.progress-container');
+    const progressBar = this.shadowRoot.querySelector('.progress');
+    const progressPercentage = this.shadowRoot.querySelector('.progress-percentage');
+    const fileNameDisplay = this.shadowRoot.querySelector('.file-name');
+    const clearProgressBtn = this.shadowRoot.querySelector('.clear-progress');
+    const mainWrapper = this.shadowRoot.querySelector('.main-wrapper');
+    const responseContainer = this.shadowRoot.querySelector('.response-container');
+    const uploadContainer = this.shadowRoot.querySelector('.upload-container');
 
     let selectedFile = null;
+    let progressInterval = null;
 
     clearBtn.addEventListener('click', () => {
       inputFile.value = '';
       uploadButton.disabled = true;
+      uploadButton.classList.remove('active');
       uploadButton.style.cursor = 'not-allowed';
+    });
+
+    clearProgressBtn.addEventListener('click', () => {
+      selectedFile = null;
+      progressContainer.style.display = 'none';
+      progressBar.style.width = '0%';
+      progressPercentage.textContent = '0%';
+      fileNameDisplay.textContent = '';
+      uploadButton.disabled = true;
+      uploadButton.classList.remove('active');
+      if (progressInterval) clearInterval(progressInterval);
     });
 
     uploadArea.addEventListener('dragover', (e) => {
@@ -237,10 +352,29 @@ class FileUploader extends HTMLElement {
       }
 
       errorBox.textContent = '';
-      fileInfo.textContent = `Файл: ${file.name}, ${file.size} байт`;
       selectedFile = file;
-      uploadButton.disabled = false;
-      uploadButton.style.cursor = 'pointer';
+      fileInfo.textContent = '';
+      progressContainer.style.display = 'flex';
+      fileNameDisplay.textContent = file.name;
+
+      // Simulate progress
+      let progress = 0;
+      progressBar.style.width = '0%';
+      progressPercentage.textContent = '0%';
+
+      if (progressInterval) clearInterval(progressInterval);
+      progressInterval = setInterval(() => {
+        progress += 10;
+        progressBar.style.width = `${progress}%`;
+        progressPercentage.textContent = `${progress}%`;
+        if (progress >= 100) {
+          clearInterval(progressInterval);
+          if (inputFile.value.trim()) {
+            uploadButton.disabled = false;
+            uploadButton.classList.add('active');
+          }
+        }
+      }, 200); // Simulate progress over 2 seconds
     });
 
     uploadButton.addEventListener('click', async () => {
@@ -262,12 +396,26 @@ class FileUploader extends HTMLElement {
         });
         const result = await response.json();
         if (response.ok) {
-          alert(`Файл успешно загружен: ${result.filename}`);
+          mainWrapper.style.display = 'none';
+          responseContainer.style.display = 'flex';
+          responseContainer.querySelector('h1').textContent = 'Файл успешно загружен';
+          responseContainer.querySelectorAll('p')[0].textContent = `message: ${result.message}`;
+          responseContainer.querySelectorAll('p')[1].textContent = `filename: ${result.filename}`;
+          responseContainer.querySelectorAll('p')[2].textContent = `nameField: ${result.nameField}`;
+          responseContainer.querySelectorAll('p')[3].textContent = `timestamp: ${result.timestamp}`;
         } else {
-          errorBox.textContent = `Ошибка: ${result.error}`;
+          mainWrapper.style.display = 'none';
+          responseContainer.style.display = 'flex';
+          uploadContainer.classList.add('error-response');
+          responseContainer.querySelector('h1').textContent = 'Ошибка в загрузке файла';
+          responseContainer.querySelectorAll('p')[0].textContent = `Error: ${result.error}`;
         }
       } catch (err) {
-        errorBox.textContent = 'Ошибка сети';
+        mainWrapper.style.display = 'none';
+        responseContainer.style.display = 'flex';
+        uploadContainer.classList.add('error-response');
+        responseContainer.querySelector('h1').textContent = 'Ошибка в загрузке файла';
+        responseContainer.querySelectorAll('p')[0].textContent = 'Ошибка сети';
       }
       uploadButton.textContent = 'Загрузить';
       uploadButton.disabled = false;
