@@ -1,11 +1,15 @@
 class FileUploader extends HTMLElement {
   constructor() {
     super();
+    // Создаем Shadow DOM для изоляции стилей и разметки компонента
     this.attachShadow({ mode: 'open' });
+    // Вызываем метод для рендеринга начального содержимого
     this.render();
   }
 
+  // Метод для рендеринга HTML и CSS компонента
   render() {
+    // Устанавливаем содержимое Shadow DOM, включая стили и разметку
     this.shadowRoot.innerHTML = `
       <style>
         :host {
@@ -29,6 +33,7 @@ class FileUploader extends HTMLElement {
           box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
           text-align: center;
           position: relative;
+          transition: background 0.3s ease;
         }
         .window {
           width: 277px;
@@ -39,7 +44,7 @@ class FileUploader extends HTMLElement {
           height: 34px;
           border-radius: 17px;
           padding: 3px;
-          background: #CCCCCE47 url('src/images/+.svg') no-repeat center;
+          background: #CCCCCE47;
           border: none;
           cursor: pointer;
           display: flex;
@@ -49,9 +54,13 @@ class FileUploader extends HTMLElement {
           top: 8px;
           right: 8px;
         }
+        .close-btn img {
+          width: 20px;
+          height: 20px;
+        }
         .main-wrapper {
           width: 277px;
-          height: 428px;
+          height: 426px;
           margin-top: 25px;
         }
         .title {
@@ -84,10 +93,16 @@ class FileUploader extends HTMLElement {
         .input-container {
           display: flex;
           align-items: center;
-          background: #f0f0ff;
+          background: #F0F0FF;
           border-radius: 8px;
           padding: 8px;
           margin: 10px 0;
+          width: 277px;
+          height: 35px;
+          box-sizing: border-box;
+        }
+        .input-container.hidden {
+          display: none;
         }
         .input-container input {
           font-family: Inter;
@@ -111,12 +126,13 @@ class FileUploader extends HTMLElement {
         .clear-btn {
           width: 16.67px;
           height: 16.67px;
-          background: url('src/images/+_input.svg') no-repeat center;
+          background: url('src/images/clear-input-button.svg') no-repeat center;
           background-size: cover;
           border: none;
           cursor: pointer;
         }
         .upload-area {
+          box-sizing: border-box;
           display: flex;
           flex-direction: column;
           justify-content: center;
@@ -127,8 +143,14 @@ class FileUploader extends HTMLElement {
           border: 1px solid #A5A5A5;
           cursor: pointer;
           font-size: 14px;
-          background: #f0f0ff;
-          color: #7a89ff;
+          background: #F0F0FF;
+          position: relative;
+          transition: border-color 0.3s ease;
+          margin: 10px 0;
+        }
+        .upload-area.uploading {
+          pointer-events: none;
+          opacity: 0.7;
         }
         .upload-window-content {
           display: flex;
@@ -136,7 +158,7 @@ class FileUploader extends HTMLElement {
           justify-content: center;
           align-items: center;
           width: 221px;
-          height: 175.76077270507812px;
+          height: 175.76px;
         }
         .upload-window-content p {
           width: 75%;
@@ -146,79 +168,175 @@ class FileUploader extends HTMLElement {
           line-height: 16.94px;
           text-align: center;
           color: #5F5CF0;
+          margin: 0;
+          margin-top: 10px;
         }
         .progress-container {
           display: none;
+          flex-direction: column;
+          align-items: flex-start;
+          padding: 3px;
+          gap: 10px;
+          width: 277px;
+          height: 35px;
+          background: #F1F1F1;
+          border: 1px solid #A5A5A5;
+          border-radius: 10px;
+          box-sizing: border-box;
+          flex: none;
+          order: 2;
+          align-self: stretch;
+          flex-grow: 0;
+          margin: 10px 0;
+        }
+        .progress-inner {
+          display: flex;
           flex-direction: row;
           align-items: center;
+          padding: 0px;
+          gap: 14px;
+          width: 267.86px;
+          height: 28px;
+          flex: none;
+          order: 0;
+          flex-grow: 0;
+        }
+        .progress-container .file-icon {
+          width: 37px;
+          height: 28px;
+          background: #5F5CF0;
+          border-radius: 10px;
+          flex: none;
+          order: 0;
+          flex-grow: 0;
+        }
+        .progress-content {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          padding: 0px;
+          gap: 6px;
+          width: 182px;
+          height: 24px;
+          flex: none;
+          order: 1;
+          flex-grow: 0;
+        }
+        .progress-header {
+          display: flex;
+          flex-direction: row;
           justify-content: space-between;
-          width: 80%;
-          margin-top: 10px;
-          padding: 5px;
-          background: #E6E6FF;
-          border-radius: 5px;
+          align-items: center;
+          padding: 0px;
+          gap: 79px;
+          width: 182px;
+          height: 12px;
+          flex: none;
+          order: 0;
+          align-self: stretch;
+          flex-grow: 0;
         }
         .progress-container p.file-name {
-          font-family: Inter;
-          font-size: 14px;
+          width: 75px;
+          height: 12px;
+          font-family: 'Inter';
+          font-style: normal;
+          font-weight: 500;
+          font-size: 10px;
+          line-height: 12px;
           color: #5F5CF0;
           margin: 0;
-          flex: 1;
-          text-align: left;
-        }
-        .progress-bar {
-          width: 50%;
-          height: 10px;
-          background: #ddd;
-          border-radius: 5px;
+          flex: none;
+          order: 0;
+          flex-grow: 0;
+          white-space: nowrap;
           overflow: hidden;
-          margin: 0 10px;
-        }
-        .progress {
-          height: 100%;
-          background: #5F5CF0;
-          width: 0%;
-          transition: width 0.1s linear;
+          text-overflow: ellipsis;
         }
         .progress-percentage {
-          font-family: Inter;
-          font-size: 12px;
+          width: 26px;
+          height: 12px;
+          font-family: 'Inter';
+          font-style: normal;
+          font-weight: 400;
+          font-size: 10px;
+          line-height: 12px;
+          text-align: right;
           color: #5F5CF0;
           margin: 0;
-          width: 30px;
-          text-align: right;
+          flex: none;
+          order: 1;
+          flex-grow: 0;
+        }
+        .progress-bar-container {
+          position: relative;
+          width: 182px;
+          height: 6px;
+          flex: none;
+          order: 1;
+          align-self: stretch;
+          flex-grow: 0;
+        }
+        .progress-bar-background {
+          position: absolute;
+          width: 182px;
+          height: 5px;
+          left: 0px;
+          top: 0.5px;
+          background: #FFFFFF;
+          border-radius: 10px;
+        }
+        .progress {
+          position: absolute;
+          width: 3px;
+          height: 4px;
+          left: 1px;
+          top: 1px;
+          background: #5F5CF0;
+          border-radius: 10px;
+          transition: width 0.1s linear;
         }
         .progress-container .clear-progress {
-          width: 16px;
-          height: 16px;
-          background: url('src/images/+_input.svg') no-repeat center;
+          width: 14.75px;
+          height: 14.75px;
+          background: url('src/images/clear-upload.svg') no-repeat center;
           background-size: cover;
           border: none;
+          border-radius: 42.6667px;
           cursor: pointer;
-          margin-left: 5px;
+          flex: none;
+          order: 2;
+          flex-grow: 0;
         }
         .button {
           background: #BBB9D2;
-          color: white;
+          color: #FFFFFF;
           border: none;
           padding: 12px;
           border-radius: 30px;
           cursor: not-allowed;
           width: 277px;
           height: 56px;
-          margin-top: 12px;
           font-family: Inter;
           font-weight: 500;
           font-size: 20px;
           line-height: 24.2px;
+          transition: background 0.3s ease, cursor 0.3s ease;
         }
         .button.active {
-          background: #FF5555;
+          background: #5F5CF0;
           cursor: pointer;
         }
+        .button.uploading {
+          pointer-events: none;
+          opacity: 0.7;
+        }
         .error {
-          color: red;
-          font-size: 12px;
+          color: #FF5555;
+          font-family: Inter;
+          font-weight: 400;
+          font-size: 14px;
+          line-height: 16.94px;
           margin-top: 5px;
         }
         .response-container {
@@ -233,12 +351,15 @@ class FileUploader extends HTMLElement {
           font-family: Inter;
           font-weight: 600;
           font-size: 20px;
+          line-height: 24.2px;
           color: #FFFFFF;
           margin-bottom: 20px;
         }
         .response-container p {
           font-family: Inter;
+          font-weight: 400;
           font-size: 14px;
+          line-height: 16.94px;
           color: #5F5CF0;
           margin: 5px 0;
         }
@@ -248,34 +369,49 @@ class FileUploader extends HTMLElement {
       </style>
       <div class="upload-container">
         <div class="window">
-          <button class="close-btn"></button>
+          <!-- Кнопка для закрытия окна загрузки -->
+          <button class="close-btn"><img src="src/images/close-upload-window.svg" alt="close" /></button>
           <div class="main-wrapper">
+            <!-- Заголовок и подзаголовок окна загрузки -->
             <div class="title">
               <h1>Загрузочное окно</h1>
               <h2>Перед загрузкой дайте имя файлу</h2>
             </div>
+            <!-- Поле для ввода имени файла -->
             <div class="input-container">
               <input type="text" id="filename" placeholder="Название файла"/>
               <button class="clear-btn"></button>
             </div>
+            <!-- Область для перетаскивания файла -->
             <div class="upload-area">
               <div class="upload-window-content">
                 <img src="src/images/docs pic.svg" alt="docs" />
                 <p>Перенесите ваш в файл в область ниже</p>
               </div>
               <div class="file-info"></div>
-              <div class="progress-container">
-                <p class="file-name"></p>
-                <div class="progress-bar">
-                  <div class="progress"></div>
-                </div>
-                <p class="progress-percentage">0%</p>
-                <button class="clear-progress"></button>
-              </div>
               <div class="error"></div>
             </div>
+            <!-- Контейнер для отображения прогресса загрузки -->
+            <div class="progress-container">
+              <div class="progress-inner">
+                <div class="file-icon"></div>
+                <div class="progress-content">
+                  <div class="progress-header">
+                    <p class="file-name"></p>
+                    <p class="progress-percentage">0%</p>
+                  </div>
+                  <div class="progress-bar-container">
+                    <div class="progress-bar-background"></div>
+                    <div class="progress"></div>
+                  </div>
+                </div>
+                <button class="clear-progress"></button>
+              </div>
+            </div>
+            <!-- Кнопка для отправки файла на сервер -->
             <button class="button" disabled>Загрузить</button>
           </div>
+          <!-- Контейнер для отображения результата загрузки -->
           <div class="response-container">
             <h1></h1>
             <p></p>
@@ -287,140 +423,220 @@ class FileUploader extends HTMLElement {
       </div>
     `;
 
+    // Инициализируем события для компонента
     this.initEvents();
   }
 
+  // Метод для добавления событий и логики взаимодействия
   initEvents() {
-    const uploadArea = this.shadowRoot.querySelector('.upload-area');
-    const inputFile = this.shadowRoot.querySelector('#filename');
-    const fileInfo = this.shadowRoot.querySelector('.file-info');
-    const errorBox = this.shadowRoot.querySelector('.error');
-    const uploadButton = this.shadowRoot.querySelector('.button');
-    const clearBtn = this.shadowRoot.querySelector('.clear-btn');
-    const progressContainer = this.shadowRoot.querySelector('.progress-container');
-    const progressBar = this.shadowRoot.querySelector('.progress');
-    const progressPercentage = this.shadowRoot.querySelector('.progress-percentage');
-    const fileNameDisplay = this.shadowRoot.querySelector('.file-name');
-    const clearProgressBtn = this.shadowRoot.querySelector('.clear-progress');
-    const mainWrapper = this.shadowRoot.querySelector('.main-wrapper');
-    const responseContainer = this.shadowRoot.querySelector('.response-container');
-    const uploadContainer = this.shadowRoot.querySelector('.upload-container');
+    // Выбираем элементы DOM для дальнейшей работы
+    const uploadArea = this.shadowRoot.querySelector('.upload-area'); // Область для перетаскивания файла
+    const inputFile = this.shadowRoot.querySelector('#filename'); // Поле ввода имени файла
+    const fileInfo = this.shadowRoot.querySelector('.file-info'); // Информация о файле (пока не используется)
+    const errorBox = this.shadowRoot.querySelector('.error'); // Контейнер для отображения ошибок
+    const uploadButton = this.shadowRoot.querySelector('.button'); // Кнопка для загрузки файла
+    const clearBtn = this.shadowRoot.querySelector('.clear-btn'); // Кнопка очистки поля ввода
+    const progressContainer = this.shadowRoot.querySelector('.progress-container'); // Контейнер прогресс-бара
+    const progressBar = this.shadowRoot.querySelector('.progress'); // Заполнение прогресс-бара
+    const progressPercentage = this.shadowRoot.querySelector('.progress-percentage'); // Процент прогресса
+    const fileNameDisplay = this.shadowRoot.querySelector('.file-name'); // Имя загружаемого файла
+    const clearProgressBtn = this.shadowRoot.querySelector('.clear-progress'); // Кнопка очистки прогресса
+    const mainWrapper = this.shadowRoot.querySelector('.main-wrapper'); // Основной контейнер содержимого
+    const responseContainer = this.shadowRoot.querySelector('.response-container'); // Контейнер результата загрузки
+    const uploadContainer = this.shadowRoot.querySelector('.upload-container'); // Главный контейнер окна
+    const inputContainer = this.shadowRoot.querySelector('.input-container'); // Контейнер с полем ввода
 
-    let selectedFile = null;
-    let progressInterval = null;
+    // Переменные для хранения состояния
+    let selectedFile = null; // Переменная для хранения выбранного файла
+    let progressInterval = null; // Переменная для хранения интервала анимации прогресса
 
+    // Слушатель события для очистки поля ввода имени файла
     clearBtn.addEventListener('click', () => {
+      // Очищаем значение поля ввода
       inputFile.value = '';
+      // Отключаем кнопку загрузки, так как имя файла удалено
       uploadButton.disabled = true;
+      // Удаляем класс активности у кнопки загрузки
       uploadButton.classList.remove('active');
+      // Устанавливаем курсор на "не разрешено"
       uploadButton.style.cursor = 'not-allowed';
     });
 
+    // Слушатель события для очистки прогресс-бара и выбранного файла
     clearProgressBtn.addEventListener('click', () => {
+      // Сбрасываем выбранный файл
       selectedFile = null;
+      // Скрываем прогресс-бар
       progressContainer.style.display = 'none';
-      progressBar.style.width = '0%';
+      // Сбрасываем ширину прогресс-бара до начального значения
+      progressBar.style.width = '3px';
+      // Сбрасываем процент прогресса
       progressPercentage.textContent = '0%';
+      // Очищаем отображение имени файла
       fileNameDisplay.textContent = '';
+      // Отключаем кнопку загрузки, так как файл удален
       uploadButton.disabled = true;
+      // Удаляем класс активности у кнопки загрузки
       uploadButton.classList.remove('active');
+      // Останавливаем анимацию прогресса, если она запущена
       if (progressInterval) clearInterval(progressInterval);
+      // Показываем контейнер ввода снова, когда прогресс очищен
+      inputContainer.classList.remove('hidden');
     });
 
+    // Эффект перетаскивания над областью загрузки (визуальная подсказка)
     uploadArea.addEventListener('dragover', (e) => {
+      // Отменяем стандартное поведение браузера
       e.preventDefault();
+      // Меняем цвет границы для визуального эффекта
       uploadArea.style.borderColor = '#5060ff';
     });
 
+    // Эффект ухода курсора с области загрузки (возвращаем стандартный цвет границы)
     uploadArea.addEventListener('dragleave', () => {
-      uploadArea.style.borderColor = '#7a89ff';
+      // Возвращаем исходный цвет границы
+      uploadArea.style.borderColor = '#A5A5A5';
     });
 
+    // Обработка события сброса файла в область загрузки (drag-and-drop)
     uploadArea.addEventListener('drop', (e) => {
+      // Отменяем стандартное поведение браузера
       e.preventDefault();
-      uploadArea.style.borderColor = '#7a89ff';
+      // Возвращаем исходный цвет границы
+      uploadArea.style.borderColor = '#A5A5A5';
+      // Получаем первый файл из перетаскиваемых данных
       const file = e.dataTransfer.files[0];
 
+      // Проверяем, был ли добавлен файл
       if (!file) return;
+
+      // Проверка типа файла (разрешены только текстовые файлы, JSON и CSV)
       if (!['text/plain', 'application/json', 'text/csv'].includes(file.type)) {
         errorBox.textContent = 'Неверный формат файла';
         return;
       }
+
+      // Проверка размера файла (максимум 1 КБ)
       if (file.size > 1024) {
         errorBox.textContent = 'Файл слишком большой (макс. 1 КБ)';
         return;
       }
 
+      // Очищаем сообщение об ошибке, если файл прошел валидацию
       errorBox.textContent = '';
+      // Сохраняем выбранный файл в переменную
       selectedFile = file;
+      // Очищаем информацию о файле (пока не используется)
       fileInfo.textContent = '';
+      // Показываем прогресс-бар
       progressContainer.style.display = 'flex';
+      // Отображаем имя файла в прогресс-баре
       fileNameDisplay.textContent = file.name;
 
-      // Simulate progress
-      let progress = 0;
-      progressBar.style.width = '0%';
-      progressPercentage.textContent = '0%';
+      // Скрываем контейнер ввода, когда файл добавлен (по заданию)
+      inputContainer.classList.add('hidden');
 
+      // Симуляция анимации прогресса загрузки
+      let progress = 0; // Начальный процент прогресса
+      progressBar.style.width = '3px'; // Сбрасываем ширину прогресс-бара до начального значения
+      progressPercentage.textContent = '0%'; // Устанавливаем начальный процент
+
+      // Останавливаем предыдущую анимацию, если она уже запущена
       if (progressInterval) clearInterval(progressInterval);
+      // Запускаем интервал для симуляции прогресса
       progressInterval = setInterval(() => {
+        // Увеличиваем прогресс на 10% каждые 200 мс
         progress += 10;
-        progressBar.style.width = `${progress}%`;
+        // Вычисляем ширину заполнения прогресс-бара (от 3px при 0% до 182px при 100%)
+        const maxWidth = 182; // Полная ширина прогресс-бара
+        const minWidth = 3; // Минимальная ширина при 0%
+        const newWidth = minWidth + (progress / 100) * (maxWidth - minWidth);
+        // Устанавливаем новую ширину прогресс-бара
+        progressBar.style.width = `${newWidth}px`;
+        // Обновляем отображение процента прогресса
         progressPercentage.textContent = `${progress}%`;
+        // Когда прогресс достигает 100%, останавливаем анимацию
         if (progress >= 100) {
           clearInterval(progressInterval);
+          // Если имя файла введено, активируем кнопку загрузки
           if (inputFile.value.trim()) {
             uploadButton.disabled = false;
             uploadButton.classList.add('active');
           }
         }
-      }, 200); // Simulate progress over 2 seconds
+      }, 200); // Симуляция прогресса в течение 2 секунд (200 мс * 10 шагов = 2 сек)
     });
 
+    // Обработка загрузки файла на сервер по нажатию кнопки "Загрузить"
     uploadButton.addEventListener('click', async () => {
+      // Проверяем, выбран ли файл и введено ли имя файла
       if (!selectedFile || !inputFile.value.trim()) {
         errorBox.textContent = 'Введите имя файла и выберите файл';
         return;
       }
-      uploadButton.textContent = 'Загрузка...';
-      uploadButton.disabled = true;
 
+      // Блокируем интерфейс на время загрузки файла на сервер
+      uploadButton.textContent = 'Загрузка...'; // Меняем текст кнопки
+      uploadButton.disabled = true; // Отключаем кнопку
+      uploadButton.classList.add('uploading'); // Добавляем класс для визуального эффекта
+      uploadArea.classList.add('uploading'); // Отключаем взаимодействие с областью загрузки
+      inputFile.disabled = true; // Отключаем поле ввода
+      clearBtn.disabled = true; // Отключаем кнопку очистки поля ввода
+      clearProgressBtn.disabled = true; // Отключаем кнопку очистки прогресса
+
+      // Формируем данные для отправки на сервер
       const formData = new FormData();
-      formData.append('file', selectedFile);
-      formData.append('name', inputFile.value.trim());
+      formData.append('file', selectedFile); // Добавляем файл
+      formData.append('name', inputFile.value.trim()); // Добавляем имя файла
 
       try {
+        // Отправляем запрос на сервер для загрузки файла
         const response = await fetch('https://file-upload-server-mc26.onrender.com/api/v1/upload', {
           method: 'POST',
           body: formData
         });
         const result = await response.json();
+        console.log(result)
+        // Проверяем успешность ответа от сервера
         if (response.ok) {
+          // Скрываем основное содержимое и показываем результат успешной загрузки
           mainWrapper.style.display = 'none';
           responseContainer.style.display = 'flex';
           responseContainer.querySelector('h1').textContent = 'Файл успешно загружен';
-          responseContainer.querySelectorAll('p')[0].textContent = `message: ${result.message}`;
-          responseContainer.querySelectorAll('p')[1].textContent = `filename: ${result.filename}`;
-          responseContainer.querySelectorAll('p')[2].textContent = `nameField: ${result.nameField}`;
-          responseContainer.querySelectorAll('p')[3].textContent = `timestamp: ${result.timestamp}`;
+          responseContainer.querySelectorAll('p')[0].textContent = `name: ${result.filename}`;
+          responseContainer.querySelectorAll('p')[1].textContent = `filename: ${result.name}`;
+          responseContainer.querySelectorAll('p')[2].textContent = `timestamp: ${result.timestamp}`;
+          responseContainer.querySelectorAll('p')[3].textContent = `message: ${result.message}`;
         } else {
+          // Скрываем основное содержимое и показываем сообщение об ошибке
           mainWrapper.style.display = 'none';
           responseContainer.style.display = 'flex';
-          uploadContainer.classList.add('error-response');
+          uploadContainer.classList.add('error-response'); // Добавляем класс для стилизации ошибки
           responseContainer.querySelector('h1').textContent = 'Ошибка в загрузке файла';
-          responseContainer.querySelectorAll('p')[0].textContent = `Error: ${result.error}`;
+          responseContainer.querySelectorAll('p')[0].textContent = `Ошибка: ${result.error}`;
         }
       } catch (err) {
+        // Обрабатываем сетевую ошибку
         mainWrapper.style.display = 'none';
         responseContainer.style.display = 'flex';
-        uploadContainer.classList.add('error-response');
+        uploadContainer.classList.add('error-response'); // Добавляем класс для стилизации ошибки
         responseContainer.querySelector('h1').textContent = 'Ошибка в загрузке файла';
         responseContainer.querySelectorAll('p')[0].textContent = 'Ошибка сети';
       }
-      uploadButton.textContent = 'Загрузить';
-      uploadButton.disabled = false;
+
+      // Разблокируем интерфейс после завершения загрузки (успешной или с ошибкой)
+      uploadButton.textContent = 'Загрузить'; // Восстанавливаем текст кнопки
+      uploadButton.disabled = false; // Включаем кнопку
+      uploadButton.classList.remove('uploading'); // Убираем класс загрузки
+      uploadArea.classList.remove('uploading'); // Восстанавливаем взаимодействие с областью загрузки
+      inputFile.disabled = false; // Включаем поле ввода
+      clearBtn.disabled = false; // Включаем кнопку очистки поля ввода
+      clearProgressBtn.disabled = false; // Включаем кнопку очистки прогресса
+      // Показываем контейнер ввода снова после завершения загрузки
+      inputContainer.classList.remove('hidden');
     });
   }
 }
 
+// Регистрируем пользовательский элемент с именем 'file-uploader'
 customElements.define('file-uploader', FileUploader);
