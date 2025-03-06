@@ -408,7 +408,7 @@ class FileUploader extends HTMLElement {
             <!-- Область для перетаскивания файла -->
             <div class="upload-area">
               <div class="upload-window-content">
-                <img src="./src/images/docs pic.svg" alt="docs" />
+                <img src="/src/images/docs pic.svg" alt="docs" />
                 <p>Перенесите ваш файл в область ниже</p>
               </div>
               <div class="file-info"></div>
