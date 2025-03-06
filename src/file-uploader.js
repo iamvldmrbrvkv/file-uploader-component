@@ -26,18 +26,34 @@ class FileUploader extends HTMLElement {
         .upload-container {
           box-sizing: border-box;
           width: 302px;
-          height: 479px;
+          height: 479px; /* Исходная высота окна */
           background: linear-gradient(to bottom, #5F5CF0, #DDDCFC, #FFFFFF);
           border-radius: 16px;
           padding: 12px 13px;
           box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
           text-align: center;
           position: relative;
-          transition: background 0.3s ease;
+          transition: background 0.3s ease, height 0.3s ease; /* Плавный переход для высоты */
+        }
+        .upload-container.response {
+          height: 230px;
+          box-sizing: border-box;
+          width: 302px;
+          border-radius: 22px;
+          padding: 7px 13px;
+          background: linear-gradient(180deg, #5F5CF0 0%, #8F8DF4 100%);
         }
         .window {
           width: 277px;
-          height: 457px;
+          height: 457px; /* Изменяем на 230px при отображении response */
+        }
+        .window.response {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          gap: 10px;
+          height: 206px; /* 230px - (12px + 12px) padding от upload-container */
         }
         .close-btn {
           width: 34px;
@@ -130,6 +146,11 @@ class FileUploader extends HTMLElement {
           background-size: cover;
           border: none;
           cursor: pointer;
+          transition: background 0.3s ease; /* Плавный переход для изменения иконки */
+        }
+        .clear-btn.blue {
+          background: url('src/images/clear-input-button-blue.svg') no-repeat center;
+          background-size: cover;
         }
         .upload-area {
           box-sizing: border-box;
@@ -343,9 +364,11 @@ class FileUploader extends HTMLElement {
           display: none;
           flex-direction: column;
           align-items: center;
-          justify-content: center;
-          height: 100%;
+          justify-content: flex-start;
+          height: 100%; /* Занимает всю доступную высоту .window */
           text-align: center;
+          overflow-y: auto; /* Добавляем прокрутку, если содержимое не помещается */
+          margin-top: 30px;
         }
         .response-container h1 {
           font-family: Inter;
@@ -353,18 +376,18 @@ class FileUploader extends HTMLElement {
           font-size: 20px;
           line-height: 24.2px;
           color: #FFFFFF;
-          margin-bottom: 20px;
+          margin: 10px 0;
         }
         .response-container p {
           font-family: Inter;
-          font-weight: 400;
+          font-weight: 300;
           font-size: 14px;
           line-height: 16.94px;
-          color: #5F5CF0;
-          margin: 5px 0;
+          color: #FFFFFF;
+          margin: 0;
         }
-        .error-response {
-          background: linear-gradient(to bottom, #FF5555, #FF9999, #FFFFFF);
+        .upload-container.response.error-response {
+          background: linear-gradient(180deg, #F05C5C 0%, #8F8DF4 100%);
         }
       </style>
       <div class="upload-container">
@@ -375,7 +398,7 @@ class FileUploader extends HTMLElement {
             <!-- Заголовок и подзаголовок окна загрузки -->
             <div class="title">
               <h1>Загрузочное окно</h1>
-              <h2>Перед загрузкой дайте имя файлу</h2>
+              <h2 class="subtitle">Перед загрузкой дайте имя файлу</h2>
             </div>
             <!-- Поле для ввода имени файла -->
             <div class="input-container">
@@ -386,7 +409,7 @@ class FileUploader extends HTMLElement {
             <div class="upload-area">
               <div class="upload-window-content">
                 <img src="src/images/docs pic.svg" alt="docs" />
-                <p>Перенесите ваш в файл в область ниже</p>
+                <p>Перенесите ваш файл в область ниже</p>
               </div>
               <div class="file-info"></div>
               <div class="error"></div>
@@ -432,10 +455,11 @@ class FileUploader extends HTMLElement {
     // Выбираем элементы DOM для дальнейшей работы
     const uploadArea = this.shadowRoot.querySelector('.upload-area'); // Область для перетаскивания файла
     const inputFile = this.shadowRoot.querySelector('#filename'); // Поле ввода имени файла
+    const subtitle = this.shadowRoot.querySelector('.subtitle'); // Подзаголовок для изменения текста
+    const clearBtn = this.shadowRoot.querySelector('.clear-btn'); // Кнопка очистки поля ввода
     const fileInfo = this.shadowRoot.querySelector('.file-info'); // Информация о файле (пока не используется)
     const errorBox = this.shadowRoot.querySelector('.error'); // Контейнер для отображения ошибок
     const uploadButton = this.shadowRoot.querySelector('.button'); // Кнопка для загрузки файла
-    const clearBtn = this.shadowRoot.querySelector('.clear-btn'); // Кнопка очистки поля ввода
     const progressContainer = this.shadowRoot.querySelector('.progress-container'); // Контейнер прогресс-бара
     const progressBar = this.shadowRoot.querySelector('.progress'); // Заполнение прогресс-бара
     const progressPercentage = this.shadowRoot.querySelector('.progress-percentage'); // Процент прогресса
@@ -444,11 +468,54 @@ class FileUploader extends HTMLElement {
     const mainWrapper = this.shadowRoot.querySelector('.main-wrapper'); // Основной контейнер содержимого
     const responseContainer = this.shadowRoot.querySelector('.response-container'); // Контейнер результата загрузки
     const uploadContainer = this.shadowRoot.querySelector('.upload-container'); // Главный контейнер окна
+    const windowElement = this.shadowRoot.querySelector('.window'); // Внутренний контейнер окна
     const inputContainer = this.shadowRoot.querySelector('.input-container'); // Контейнер с полем ввода
+    const closeBtn = this.shadowRoot.querySelector('.close-btn'); // Кнопка закрытия окна с ответом от сервера
+    const errorDiv = this.shadowRoot.querySelector('.error'); // Контейнер для отображения ошибок
 
     // Переменные для хранения состояния
     let selectedFile = null; // Переменная для хранения выбранного файла
     let progressInterval = null; // Переменная для хранения интервала анимации прогресса
+
+    // Добавляем обработчик для кнопки закрытия окна с ответом от сервера
+    closeBtn.addEventListener('click', () => {
+      // Скрываем контейнер с ответом
+      responseContainer.style.display = 'none';
+      // Показываем контейнер загрузки
+      mainWrapper.style.display = 'block';
+      // Делаем цвет кнопки инпута по умолчанию
+      clearBtn.classList.remove('blue'); 
+      // Скрываем контейнер с ошибкой
+      errorDiv.style.display = 'none';
+      // Скрываем прогресс-бар
+      progressContainer.style.display = 'none';
+      // Восстанавливаем высоту окна и внутреннего контейнера
+      uploadContainer.classList.remove('response');
+      windowElement.classList.remove('response');
+      // Сбрасываем подзаголовок
+      subtitle.textContent = 'Перед загрузкой дайте имя файлу';
+      // Очищаем отображение имени файла
+      fileNameDisplay.textContent = '';
+      // Сбрасываем все поля ввода и настройки
+      inputFile.value = '';
+      uploadButton.disabled = true;
+      uploadButton.classList.remove('active');
+      uploadButton.style.cursor = 'not-allowed';
+      inputContainer.classList.remove('hidden');
+    });
+
+    // Слушатель события для изменения текста в инпуте
+    inputFile.addEventListener('input', () => {
+      // Если в инпуте есть текст, меняем подзаголовок и иконку крестика
+      if (inputFile.value.trim()) {
+        subtitle.textContent = 'Перенесите ваш файл в область ниже';
+        clearBtn.classList.add('blue'); // Добавляем класс для синей иконки
+      } else {
+        // Если инпут пуст, возвращаем начальный текст и исходную иконку
+        subtitle.textContent = 'Перед загрузкой дайте имя файлу';
+        clearBtn.classList.remove('blue'); // Удаляем класс синей иконки
+      }
+    });
 
     // Слушатель события для очистки поля ввода имени файла
     clearBtn.addEventListener('click', () => {
@@ -460,6 +527,10 @@ class FileUploader extends HTMLElement {
       uploadButton.classList.remove('active');
       // Устанавливаем курсор на "не разрешено"
       uploadButton.style.cursor = 'not-allowed';
+      // Возвращаем начальный текст подзаголовка
+      subtitle.textContent = 'Перед загрузкой дайте имя файлу';
+      // Возвращаем исходную иконку крестика
+      clearBtn.classList.remove('blue');
     });
 
     // Слушатель события для очистки прогресс-бара и выбранного файла
@@ -482,11 +553,20 @@ class FileUploader extends HTMLElement {
       if (progressInterval) clearInterval(progressInterval);
       // Показываем контейнер ввода снова, когда прогресс очищен
       inputContainer.classList.remove('hidden');
+      // Возвращаем текст "Перенесите ваш файл в область ниже" после очистки прогресса
+      subtitle.textContent = 'Перенесите ваш файл в область ниже';
     });
 
     // Эффект перетаскивания над областью загрузки (визуальная подсказка)
     uploadArea.addEventListener('dragover', (e) => {
-      // Отменяем стандартное поведение браузера
+      // Проверяем, введено ли имя файла
+      if (!inputFile.value.trim()) {
+        // Если имя не введено, показываем алерт и прерываем событие
+        alert('Дайте имя файлу');
+        e.preventDefault();
+        return;
+      }
+      // Отменяем стандартное поведение браузера для корректной обработки перетаскивания
       e.preventDefault();
       // Меняем цвет границы для визуального эффекта
       uploadArea.style.borderColor = '#5060ff';
@@ -500,6 +580,13 @@ class FileUploader extends HTMLElement {
 
     // Обработка события сброса файла в область загрузки (drag-and-drop)
     uploadArea.addEventListener('drop', (e) => {
+      // Проверяем, введено ли имя файла
+      if (!inputFile.value.trim()) {
+        // Если имя не введено, показываем алерт и прерываем событие
+        alert('Дайте имя файлу');
+        e.preventDefault();
+        return;
+      }
       // Отменяем стандартное поведение браузера
       e.preventDefault();
       // Возвращаем исходный цвет границы
@@ -510,9 +597,10 @@ class FileUploader extends HTMLElement {
       // Проверяем, был ли добавлен файл
       if (!file) return;
 
+      errorDiv.style.display = 'block'; // Показываем контейнер с ошибкой
       // Проверка типа файла (разрешены только текстовые файлы, JSON и CSV)
       if (!['text/plain', 'application/json', 'text/csv'].includes(file.type)) {
-        errorBox.textContent = 'Неверный формат файла';
+        errorBox.textContent = 'Поддерживаемыe форматы - .txt, .json, .csv';
         return;
       }
 
@@ -558,6 +646,8 @@ class FileUploader extends HTMLElement {
         // Когда прогресс достигает 100%, останавливаем анимацию
         if (progress >= 100) {
           clearInterval(progressInterval);
+          // Меняем текст подзаголовка на "Загрузите ваш файл"
+          subtitle.textContent = 'Загрузите ваш файл';
           // Если имя файла введено, активируем кнопку загрузки
           if (inputFile.value.trim()) {
             uploadButton.disabled = false;
@@ -569,14 +659,19 @@ class FileUploader extends HTMLElement {
 
     // Обработка загрузки файла на сервер по нажатию кнопки "Загрузить"
     uploadButton.addEventListener('click', async () => {
-      // Проверяем, выбран ли файл и введено ли имя файла
-      if (!selectedFile || !inputFile.value.trim()) {
-        errorBox.textContent = 'Введите имя файла и выберите файл';
+      // Проверяем, выбран ли файл
+      if (!selectedFile) {
+        errorBox.textContent = 'Выберите файл для загрузки';
+        return;
+      }
+      // Проверяем, пустое ли поле ввода имени файла (для дополнительной безопасности)
+      if (!inputFile.value.trim()) {
+        errorBox.textContent = 'Введите имя файла';
         return;
       }
 
       // Блокируем интерфейс на время загрузки файла на сервер
-      uploadButton.textContent = 'Загрузка...'; // Меняем текст кнопки
+      uploadButton.textContent = 'Файл загружается...'; // Меняем текст кнопки
       uploadButton.disabled = true; // Отключаем кнопку
       uploadButton.classList.add('uploading'); // Добавляем класс для визуального эффекта
       uploadArea.classList.add('uploading'); // Отключаем взаимодействие с областью загрузки
@@ -596,12 +691,15 @@ class FileUploader extends HTMLElement {
           body: formData
         });
         const result = await response.json();
-        console.log(result)
+        console.log(result);
         // Проверяем успешность ответа от сервера
         if (response.ok) {
           // Скрываем основное содержимое и показываем результат успешной загрузки
           mainWrapper.style.display = 'none';
           responseContainer.style.display = 'flex';
+          // Меняем высоту окна и внутреннего контейнера
+          uploadContainer.classList.add('response');
+          windowElement.classList.add('response');
           responseContainer.querySelector('h1').textContent = 'Файл успешно загружен';
           responseContainer.querySelectorAll('p')[0].textContent = `name: ${result.filename}`;
           responseContainer.querySelectorAll('p')[1].textContent = `filename: ${result.name}`;
@@ -611,6 +709,9 @@ class FileUploader extends HTMLElement {
           // Скрываем основное содержимое и показываем сообщение об ошибке
           mainWrapper.style.display = 'none';
           responseContainer.style.display = 'flex';
+          // Меняем высоту окна и внутреннего контейнера
+          uploadContainer.classList.add('response');
+          windowElement.classList.add('response');
           uploadContainer.classList.add('error-response'); // Добавляем класс для стилизации ошибки
           responseContainer.querySelector('h1').textContent = 'Ошибка в загрузке файла';
           responseContainer.querySelectorAll('p')[0].textContent = `Ошибка: ${result.error}`;
@@ -619,6 +720,9 @@ class FileUploader extends HTMLElement {
         // Обрабатываем сетевую ошибку
         mainWrapper.style.display = 'none';
         responseContainer.style.display = 'flex';
+        // Меняем высоту окна и внутреннего контейнера
+        uploadContainer.classList.add('response');
+        windowElement.classList.add('response');
         uploadContainer.classList.add('error-response'); // Добавляем класс для стилизации ошибки
         responseContainer.querySelector('h1').textContent = 'Ошибка в загрузке файла';
         responseContainer.querySelectorAll('p')[0].textContent = 'Ошибка сети';
