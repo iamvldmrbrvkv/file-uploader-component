@@ -500,7 +500,6 @@ class FileUploader extends HTMLElement {
       inputFile.value = '';
       uploadButton.disabled = true;
       uploadButton.classList.remove('active');
-      uploadButton.style.cursor = 'not-allowed';
       inputContainer.classList.remove('hidden');
     });
 
@@ -525,8 +524,6 @@ class FileUploader extends HTMLElement {
       uploadButton.disabled = true;
       // Удаляем класс активности у кнопки загрузки
       uploadButton.classList.remove('active');
-      // Устанавливаем курсор на "не разрешено"
-      uploadButton.style.cursor = 'not-allowed';
       // Возвращаем начальный текст подзаголовка
       subtitle.textContent = 'Перед загрузкой дайте имя файлу';
       // Возвращаем исходную иконку крестика
