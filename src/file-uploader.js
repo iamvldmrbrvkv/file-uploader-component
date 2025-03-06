@@ -142,14 +142,14 @@ class FileUploader extends HTMLElement {
         .clear-btn {
           width: 16.67px;
           height: 16.67px;
-          background: url('src/images/clear-input-button.svg') no-repeat center;
+          background: url('./src/images/clear-input-button.svg') no-repeat center;
           background-size: cover;
           border: none;
           cursor: pointer;
           transition: background 0.3s ease; /* Плавный переход для изменения иконки */
         }
         .clear-btn.blue {
-          background: url('src/images/clear-input-button-blue.svg') no-repeat center;
+          background: url('./src/images/clear-input-button-blue.svg') no-repeat center;
           background-size: cover;
         }
         .upload-area {
@@ -320,7 +320,7 @@ class FileUploader extends HTMLElement {
         .progress-container .clear-progress {
           width: 14.75px;
           height: 14.75px;
-          background: url('src/images/clear-upload.svg') no-repeat center;
+          background: url('./src/images/clear-upload.svg') no-repeat center;
           background-size: cover;
           border: none;
           border-radius: 42.6667px;
@@ -408,7 +408,7 @@ class FileUploader extends HTMLElement {
             <!-- Область для перетаскивания файла -->
             <div class="upload-area">
               <div class="upload-window-content">
-                <img src="src/images/docs pic.svg" alt="docs" />
+                <img src="./src/images/docs pic.svg" alt="docs" />
                 <p>Перенесите ваш файл в область ниже</p>
               </div>
               <div class="file-info"></div>
