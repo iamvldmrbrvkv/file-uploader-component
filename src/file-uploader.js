@@ -45,7 +45,7 @@ class FileUploader extends HTMLElement {
         }
         .window {
           width: 277px;
-          height: 457px; /* Изменяем на 230px при отображении response */
+          height: 426px; /* Изменяем на 230px при отображении response */
         }
         .window.response {
           display: flex;
