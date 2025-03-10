@@ -417,6 +417,7 @@ class FileUploader extends HTMLElement {
           opacity: 0.7;
         }
         .error {
+          display: none;
           color: #FF5555;
           font-family: Inter;
           font-weight: 400;
@@ -475,7 +476,6 @@ class FileUploader extends HTMLElement {
                 <img src="/images/docs pic.svg" alt="docs" />
                 <p>Перенесите ваш файл в область ниже</p>
               </div>
-              <div class="file-info"></div>
               <div class="error"></div>
             </div>
             <!-- Контейнер для отображения прогресса загрузки -->
@@ -528,7 +528,6 @@ class FileUploader extends HTMLElement {
     const inputFile = this.shadowRoot.querySelector('#filename');
     const subtitle = this.shadowRoot.querySelector('.subtitle');
     const clearBtn = this.shadowRoot.querySelector('.clear-btn');
-    const fileInfo = this.shadowRoot.querySelector('.file-info');
     const errorBox = this.shadowRoot.querySelector('.error');
     const uploadButton = this.shadowRoot.querySelector('.button');
     const progressContainer = this.shadowRoot.querySelector('.progress-container');
@@ -569,6 +568,7 @@ class FileUploader extends HTMLElement {
       uploadButton.disabled = true;
       uploadButton.classList.remove('active');
       inputContainer.classList.remove('hidden');
+      errorBox.style.display = 'none';
     });
   
     // Слушатель события для изменения текста в инпуте
@@ -630,6 +630,7 @@ class FileUploader extends HTMLElement {
   
     // Обработка события сброса файла в область загрузки
     uploadArea.addEventListener('drop', (e) => {
+      errorBox.style.display = 'block';
       if (!inputFile.value.trim()) {
         alert('Дайте имя файлу');
         e.preventDefault();
@@ -654,7 +655,6 @@ class FileUploader extends HTMLElement {
   
       errorBox.textContent = '';
       selectedFile = file;
-      fileInfo.textContent = '';
       progressContainer.style.display = 'flex';
       fileNameDisplay.textContent = file.name;
   
