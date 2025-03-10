@@ -561,6 +561,7 @@ class FileUploader extends HTMLElement {
       progressComplete.querySelector('.file-name').textContent = '';
       progressComplete.querySelector('.progress-percentage').textContent = '';
       uploadContainer.classList.remove('response');
+      uploadContainer.classList.remove('error-response');
       windowElement.classList.remove('response');
       subtitle.textContent = 'Перед загрузкой дайте имя файлу';
       fileNameDisplay.textContent = '';
