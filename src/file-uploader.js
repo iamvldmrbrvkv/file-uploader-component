@@ -569,6 +569,11 @@ class FileUploader extends HTMLElement {
       uploadButton.classList.remove('active');
       inputContainer.classList.remove('hidden');
       errorBox.style.display = 'none';
+      responseContainer.querySelector('h1').textContent = '';
+      responseContainer.querySelectorAll('p')[0].textContent = '';
+      responseContainer.querySelectorAll('p')[1].textContent = '';
+      responseContainer.querySelectorAll('p')[2].textContent = '';
+      responseContainer.querySelectorAll('p')[3].textContent = '';
     });
   
     // Слушатель события для изменения текста в инпуте
